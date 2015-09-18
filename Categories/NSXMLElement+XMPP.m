@@ -317,6 +317,16 @@
   [self addAttributeWithName:name numberValue:@(unsignedIntegerValue)];
 }
 
+- (void)addAttributeWithName:(NSString *)name longLongValue:(int64_t)longLongValue
+{
+    [self addAttributeWithName:name numberValue:@(longLongValue)];
+}
+
+- (void)addAttributeWithName:(NSString *)name unsignedLongLongValue:(uint64_t)unsignedLongLongValue
+{
+    [self addAttributeWithName:name numberValue:@(unsignedLongLongValue)];
+}
+
 - (void)addAttributeWithName:(NSString *)name stringValue:(NSString *)string
 {
 	[self addAttribute:[NSXMLNode attributeWithName:name stringValue:string]];

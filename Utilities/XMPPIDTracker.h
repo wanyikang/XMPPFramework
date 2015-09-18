@@ -150,6 +150,7 @@ extern const NSTimeInterval XMPPIDTrackerTimeoutNone;
 - (BOOL)invokeForElement:(XMPPElement *)element withObject:(id)obj;
 
 - (NSUInteger)numberOfIDs;
+- (NSArray *)elementIDs;
 
 - (void)removeID:(NSString *)elementID;
 - (void)removeAllIDs;

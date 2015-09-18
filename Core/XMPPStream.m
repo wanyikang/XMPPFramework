@@ -50,6 +50,7 @@
 
 NSString *const XMPPStreamErrorDomain = @"XMPPStreamErrorDomain";
 NSString *const XMPPStreamDidChangeMyJIDNotification = @"XMPPStreamDidChangeMyJID";
+NSString *const XMPPStreamDidChangeMyCIDNotification = @"XMPPStreamDidChangeMyCID";
 
 const NSTimeInterval XMPPStreamTimeoutNone = -1;
 
@@ -119,6 +120,9 @@ enum XMPPStreamConfig
 	XMPPJID *myJID_setByClient;
 	XMPPJID *myJID_setByServer;
 	XMPPJID *remoteJID;
+    uint64_t myCID_setByClient;
+	uint64_t myCID_setByServer;
+	uint64_t remoteCID;
 	
 	XMPPPresence *myPresence;
 	NSXMLElement *rootElement;
@@ -391,6 +395,67 @@ enum XMPPStreamConfig
 		block();
 	else
 		dispatch_async(xmppQueue, block);
+}
+
+- (uint64_t)myCID {
+    __block uint64_t result = 0;
+
+    dispatch_block_t block = ^{
+        result = myCID_setByServer;
+    };
+
+	if (dispatch_get_specific(xmppQueueTag))
+        block();
+    else
+        dispatch_sync(xmppQueue, block);
+	return result;
+}
+
+- (void)setMyCID_setByClient:(uint64_t)newMyCID {
+    // XMPPJID is an immutable class (copy == retain)
+    dispatch_block_t block = ^{
+        if (myCID_setByClient != newMyCID) {
+            myCID_setByClient = newMyCID;
+        }
+        if (myCID_setByServer != newMyCID) {
+            myCID_setByServer = newMyCID;
+            [[NSNotificationCenter defaultCenter] postNotificationName:XMPPStreamDidChangeMyCIDNotification object:self];
+            [multicastDelegate xmppStreamDidChangeMyCID:self];
+        }
+    };
+
+    if (dispatch_get_specific(xmppQueueTag))
+        block();
+    else
+        dispatch_async(xmppQueue, block);
+}
+
+- (void)setMyCID_setByServer:(uint64_t)newMyCID {
+    // XMPPJID is an immutable class (copy == retain)
+    dispatch_block_t block = ^{
+        if (myCID_setByServer != newMyCID) {
+            uint64_t oldMyCID;
+            if (myCID_setByServer)
+                oldMyCID = myCID_setByServer;
+            else
+                oldMyCID = myCID_setByClient;
+            myCID_setByServer = newMyCID;
+
+            if (oldMyCID != newMyCID) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:XMPPStreamDidChangeMyCIDNotification object:self];
+                [multicastDelegate xmppStreamDidChangeMyCID:self];
+            }
+        }
+    };
+
+    if (dispatch_get_specific(xmppQueueTag))
+        block();
+    else
+        dispatch_async(xmppQueue, block);
+}
+
+- (void)setMyCID:(uint64_t)newMyCID {
+    [self setMyCID_setByClient:newMyCID];
 }
 
 - (XMPPJID *)myJID
@@ -770,7 +835,7 @@ enum XMPPStreamConfig
 	// Asynchronous operation (if outside xmppQueue)
 	
 	dispatch_block_t block = ^{
-		[multicastDelegate addDelegate:delegate delegateQueue:delegateQueue];
+        [multicastDelegate addDelegate:delegate delegateQueue:delegateQueue ? : xmppQueue];
 	};
 	
 	if (dispatch_get_specific(xmppQueueTag))
@@ -1435,6 +1500,13 @@ enum XMPPStreamConfig
 			}
 			else
 			{
+                NSString *offLineStr = @"<presence type=\"unavailable\"><x xmlns=\"vcard-temp:x:update\"><photo/></x></presence>";
+				NSData *offlineData = [offLineStr dataUsingEncoding:NSUTF8StringEncoding];
+				XMPPLogSend(@"SEND: %@", offLineStr);
+				numberOfBytesSent += [offlineData length];
+				
+				[asyncSocket writeData:offlineData withTimeout:TIMEOUT_XMPP_WRITE tag:TAG_XMPP_WRITE_STOP];
+
 				NSString *termStr = @"</stream:stream>";
 				NSData *termData = [termStr dataUsingEncoding:NSUTF8StringEncoding];
 				
@@ -3838,6 +3910,7 @@ enum XMPPStreamConfig
 	
 	NSXMLElement *r_bind = [response elementForName:@"bind" xmlns:@"urn:ietf:params:xml:ns:xmpp-bind"];
 	NSXMLElement *r_jid = [r_bind elementForName:@"jid"];
+    NSXMLElement *r_cid = [r_bind elementForName:@"cid"];
 	
 	if (r_jid)
 	{
@@ -3846,6 +3919,7 @@ enum XMPPStreamConfig
 		NSString *fullJIDStr = [r_jid stringValue];
 		
 		[self setMyJID_setByServer:[XMPPJID jidWithString:fullJIDStr]];
+        [self setMyCID_setByServer:[r_cid stringValueAsUInt64]];
 		
 		// On to the next step
 		BOOL skipStartSessionOverride = NO;

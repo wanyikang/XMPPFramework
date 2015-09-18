@@ -47,7 +47,16 @@
 	
 	start = dispatch_time(DISPATCH_TIME_NOW, 0);
 	timeout = (inTimeout * NSEC_PER_SEC);
-	interval = (inInterval > 0.0) ? (inInterval * NSEC_PER_SEC) : DISPATCH_TIME_FOREVER;
+	/**
+     * interval = (inInterval > 0.0) ? (inInterval * NSEC_PER_SEC) : DISPATCH_TIME_FOREVER;
+     * Do NOT write it like the upper sentance, because the "? :" operator has bug in oc.
+     * It will work ok when you write it like the following "if else" sentance.
+     * by richard
+    **/
+    if (inInterval > 0.0)
+        interval = inInterval * NSEC_PER_SEC;
+    else
+        interval = DISPATCH_TIME_FOREVER;
 	
 	dispatch_source_set_timer(timer, dispatch_time(start, timeout), interval, 0);
 	dispatch_resume(timer);

@@ -69,6 +69,10 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
  * 
  * For example, if you were implementing two different custom extensions on top of XMPP,
  * you could put them in separate classes, and simply add each as a delegate.
+ *
+ * warning: pass NULL delegate queue will execute on xmppStream queue.
+ *  use NULL carefullly.
+ *
 **/
 - (void)addDelegate:(id)delegate delegateQueue:(dispatch_queue_t)delegateQueue;
 - (void)removeDelegate:(id)delegate delegateQueue:(dispatch_queue_t)delegateQueue;
@@ -156,6 +160,14 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
  * Only used in P2P streams.
 **/
 @property (strong, readonly) XMPPJID *remoteJID;
+
+/**
+ * The CID of the user default company.
+ *
+ * This value is required, and is used in many parts of the underlying implementation.
+ * now oly set by client.
+ **/
+@property (readwrite) uint64_t myCID;
 
 /**
  * Many routers will teardown a socket mapping if there is no activity on the socket.
@@ -1021,6 +1033,11 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
  * This method is called if the XMPP Stream's jid changes.
 **/
 - (void)xmppStreamDidChangeMyJID:(XMPPStream *)xmppStream;
+
+/**
+ * This method is called if the XMPP Stream's cid changes.
+**/
+- (void)xmppStreamDidChangeMyCID:(XMPPStream *)xmppStream;
 
 /**
  * This method is called if the disconnect method is called.

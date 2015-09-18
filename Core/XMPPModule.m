@@ -221,4 +221,25 @@
 	return NSStringFromClass([self class]);
 }
 
+- (NSError *)testConnect {
+    if ([xmppStream isConnected]) {
+        return nil;
+    }
+    NSString *errMsg = @"Not connected.";
+    NSDictionary *info = @{NSLocalizedDescriptionKey : errMsg};
+    NSError *err = [NSError errorWithDomain:XMPPStreamErrorDomain code:XMPPStreamInvalidState userInfo:info];
+    return err;
+}
+
+- (void)excuteBlock:(dispatch_block_t)block {
+    dispatch_block_t exeBlock = ^{ @autoreleasepool {
+        block();
+    }};
+    if (dispatch_get_specific(moduleQueueTag)) {
+        exeBlock();
+    } else {
+        dispatch_async(moduleQueue, block);
+    }
+}
+
 @end

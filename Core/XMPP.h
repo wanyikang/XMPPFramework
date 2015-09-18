@@ -29,3 +29,5 @@
 // 
 
 #import "NSXMLElement+XMPP.h"
+
+typedef void (^ CallBackErrorBlock)(id, NSError *);

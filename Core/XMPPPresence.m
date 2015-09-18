@@ -59,6 +59,11 @@
 	return [[XMPPPresence alloc] initWithType:type to:to];
 }
 
++ (XMPPPresence *)presenceWithType:(NSString *)type to:(XMPPJID *)to elementID:(NSString *)eid
+{
+    return [[XMPPPresence alloc] initWithType:type to:to elementID:eid];
+}
+
 - (id)init
 {
 	self = [super initWithName:@"presence"];
@@ -79,6 +84,23 @@
 		
 		if (to)
 			[self addAttributeWithName:@"to" stringValue:[to full]];
+	}
+	return self;
+}
+
+- (id)initWithType:(NSString *)type to:(XMPPJID *)to elementID:(NSString *)eid
+{
+	if ((self = [super initWithName:@"presence"]))
+	{
+		if (type)
+			[self addAttributeWithName:@"type" stringValue:type];
+
+		if (to)
+			[self addAttributeWithName:@"to" stringValue:[to full]];
+
+        if (eid) {
+            [self addAttributeWithName:@"id" stringValue:eid];
+        }
 	}
 	return self;
 }

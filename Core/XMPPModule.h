@@ -40,4 +40,8 @@
 
 - (NSString *)moduleName;
 
+- (NSError *)testConnect;
+
+- (void)excuteBlock:(dispatch_block_t)block;
+
 @end

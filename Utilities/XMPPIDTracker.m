@@ -215,6 +215,13 @@ const NSTimeInterval XMPPIDTrackerTimeoutNone = -1;
 	return [[dict allKeys] count];
 }
 
+- (NSArray *)elementIDs
+{
+    AssertProperQueue();
+
+    return [dict allKeys];
+}
+
 - (void)removeID:(NSString *)elementID
 {
 	AssertProperQueue();
